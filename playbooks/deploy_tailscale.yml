@@ -1,0 +1,6 @@
+- name: Sets up tailscale node in a container
+  hosts: tailscale
+  become: true
+  gather_facts: false
+  tasks:
+    - 
