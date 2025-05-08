@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for baseline
+- name: Install baseline packages
+  ansible.builtin.dnf:
+    name: "{{ baseline_packages }}"
+  when: baseline_packages is defined
+  become: true
+
+- name: Configure timezone
+  community.general.timezone:
+    name: "{{ baseline_timezone }}"
+  when: baseline_timezone is defined
+  become: true
+
+- name: Configure /etc/issue to appear
+  become: true
+  block:
+    - name: Set SSH Banner
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?Banner '
+        line: 'Banner /etc/issue'
+        state: present
+        backrefs: true
+
+    - name: Reload SSHD
+      ansible.builtin.systemd:
+        name: sshd
+        state: reloaded
+
+    - name: Confgure /etc/issue
+      ansible.builtin.template:
+        src: issue.j2
+        dest: /etc/issue
+        owner: root
+        group: root
+        mode: '0644'
+
+- name: Configure motd
+  ansible.builtin.template:
+    src: motd.j2
+    dest: /etc/motd
+    owner: root
+    group: root
+    mode: '0644'
+  become: true  
+
+- name: Configure custom bash prompt
+  ansible.builtin.template:
+    src: sh.local.j2
+    dest: /etc/profile.d/sh.local
+    owner: root
+    group: root
+    mode: '0644'
+  become: true

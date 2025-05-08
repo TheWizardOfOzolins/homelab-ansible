@@ -1,0 +1,7 @@
+---
+- name: Run baseline role
+  hosts: all
+  tasks:
+    - name: Include baseline role
+      ansible.builtin.include_role:
+        name: baseline

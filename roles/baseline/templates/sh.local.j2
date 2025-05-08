@@ -1,0 +1,63 @@
+# ============[ Homelab Bash Prompt Customization ]============
+
+# -- Auto logout a physical shell after 10 minutes
+if [[ "$(tty)" == /dev/tty[0-9]* ]]; then
+  readonly TMOUT=600
+  export TMOUT
+fi
+
+# -- History settings
+shopt -s histappend
+HISTFILESIZE=1000000
+HISTSIZE=1000000
+HISTCONTROL="ignoredups"
+HISTIGNORE='ls:clear:history:pwd:git status'
+shopt -s cmdhist
+HISTTIMEFORMAT='%F %T '
+
+# -- Load Git prompt helper if available
+if [ -f /usr/share/git-core/contrib/completion/git-prompt.sh ]; then
+  source /usr/share/git-core/contrib/completion/git-prompt.sh
+fi
+
+# -- Git prompt enhancements
+export GIT_PS1_SHOWDIRTYSTATE=1       # * for unstaged, + for staged
+export GIT_PS1_SHOWUNTRACKEDFILES=1    # ? for untracked files
+export GIT_PS1_DESCRIBE_STYLE='branch' # Only branch name
+
+# -- Colors
+RED='\[\e[1;31m\]'
+YELLOW='\[\e[1;33m\]'
+RESET='\[\e[0m\]'
+
+# -- Virtual Environment Display
+virtualenv_info='${VIRTUAL_ENV:+(${VIRTUAL_ENV##*/})}'
+
+# -- Set the prompt dynamically (no Git dirty check)
+set_prompt() {
+  local EXIT="$?"
+
+  # Set color: red for root, yellow for normal user
+  if [[ $EUID -eq 0 ]]; then
+    PROMPT_COLOR="$RED"
+  else
+    PROMPT_COLOR="$YELLOW"
+  fi
+
+  # Set success/failure indicator
+  if [[ $EXIT != 0 ]]; then
+    STATUS="${PROMPT_COLOR}❌${RESET}"
+  else
+    STATUS="${PROMPT_COLOR}✅${RESET}"
+  fi
+
+  # Build the full PS1
+  if [[ $EUID -eq 0 ]]; then
+    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w\$(__git_ps1 '[%s]') ${STATUS} # ${RESET}"
+  else
+    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w\$(__git_ps1 '[%s]') ${STATUS} \$ ${RESET}"
+  fi
+}
+
+# -- Update PROMPT_COMMAND
+PROMPT_COMMAND="set_prompt; history -a; history -n"

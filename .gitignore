@@ -1,0 +1,4 @@
+.vscode
+.ansible
+vault.yml
+ansible_collections
