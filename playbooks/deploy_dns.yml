@@ -1,6 +1,8 @@
 - name: Sets up unbound and pihole in a container
   hosts: dns
+  become: true
+  gather_facts: false
   tasks:
-    - name: set up containers
+    - name: Set up containers
       ansible.builtin.include_role:
-        name: fedora.linux_system_roles.podman
+        name: deploy_pihole_unbound

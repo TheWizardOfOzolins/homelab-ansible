@@ -53,9 +53,9 @@ set_prompt() {
 
   # Build the full PS1
   if [[ $EUID -eq 0 ]]; then
-    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w\$(__git_ps1 '[%s]') ${STATUS} # ${RESET}"
+    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w ${STATUS} # ${RESET}"
   else
-    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w\$(__git_ps1 '[%s]') ${STATUS} \$ ${RESET}"
+    PS1="${virtualenv_info}${PROMPT_COLOR}[\A] \u@\h:\w ${STATUS} \$ ${RESET}"
   fi
 }
 

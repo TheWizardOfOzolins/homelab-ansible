@@ -1,0 +1,8 @@
+- name: Sets up httpboot server / kickstarts
+  hosts: dns
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Set up containers
+      ansible.builtin.include_role:
+        name: deploy_httpboot

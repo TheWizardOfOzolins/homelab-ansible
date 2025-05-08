@@ -1,0 +1,64 @@
+# SPDX-License-Identifier: MIT-0
+---
+# tasks file for deploy_pihole_unbound
+- name: Precreate unbound config dir
+  ansible.builtin.file:
+    path: /opt/unbound/
+    state: directory
+    mode: '0750'
+
+- name: Template out unbound config
+  ansible.builtin.template:
+    src: templates/unbound.conf.j2
+    dest: /opt/unbound/unbound.conf
+    mode: '0644'
+    owner: root
+    group: root
+
+- name: Set DNSStubListener to no
+  ansible.builtin.lineinfile:
+    path: /usr/lib/systemd/resolved.conf
+    regexp: '^#?DNSStubListener=.*'
+    line: 'DNSStubListener=no'
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Set DNS to localhost
+  ansible.builtin.lineinfile:
+    path: /usr/lib/systemd/resolved.conf
+    regexp: '^#?DNS=.*'
+    line: 'DNS=127.0.0.1'
+    create: true
+    owner: root
+    group: root
+    mode: '0644'
+
+
+- name: Restart systemd-resolved
+  ansible.builtin.systemd:
+    name: systemd-resolved
+    state: restarted
+
+- name: Set up containers
+  vars:
+    podman_create_host_directories: "{{ dns_podman_create_host_directories }}"
+    podman_firewall: "{{ dns_podman_firewall }}"
+    podman_kube_specs: "{{ dns_podman_kube_specs }}"
+  ansible.builtin.include_role:
+    name: fedora.linux_system_roles.podman
+
+- name: Enable wildcard DNS support
+  when: deploy_pihole_unbound_wildcard_dns_address is defined
+  block:
+    - name: Set etc_dnsmasq_d to true in pihole.toml
+      ansible.builtin.replace:
+        path: /opt/pihole/config/pihole.toml
+        regexp: '^etc_dnsmasq_d\s*=.*$'
+        replace: 'etc_dnsmasq_d = true'
+    
+    - name: Template out custom DNS wildcard hosts
+      ansible.builtin.template:
+        src: templates/dnsmasq.d/99-custom.conf
+

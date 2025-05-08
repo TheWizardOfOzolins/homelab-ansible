@@ -1,6 +1,13 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # tasks file for baseline
+- name: Install mandatory packages
+  ansible.builtin.dnf:
+    name:
+      - git
+  when: baseline_packages is defined
+  become: true
+
 - name: Install baseline packages
   ansible.builtin.dnf:
     name: "{{ baseline_packages }}"
@@ -44,7 +51,7 @@
     owner: root
     group: root
     mode: '0644'
-  become: true  
+  become: true
 
 - name: Configure custom bash prompt
   ansible.builtin.template:
