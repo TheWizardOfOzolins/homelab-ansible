@@ -57,8 +57,16 @@
         path: /opt/pihole/config/pihole.toml
         regexp: '^etc_dnsmasq_d\s*=.*$'
         replace: 'etc_dnsmasq_d = true'
-    
+
     - name: Template out custom DNS wildcard hosts
       ansible.builtin.template:
         src: templates/dnsmasq.d/99-custom.conf
+        dest: /opt/pihole/dnsmasq.d/99-custom.conf
+        owner: root
+        group: root
+        mode: '0644'
 
+    - name: Restart dns pod
+      containers.podman.podman_pod:
+        name: dns
+        state: started

@@ -3,4 +3,10 @@
   become: true
   gather_facts: false
   tasks:
-    - 
+    - name: Set up tailscale container
+      vars:
+        podman_create_host_directories: "{{ tailscale_podman_create_host_directories }}"
+        podman_firewall: "{{ tailscale_podman_firewall }}"
+        podman_kube_specs: "{{ tailscale_podman_kube_specs }}"
+      ansible.builtin.include_role:
+        name: fedora.linux_system_roles.podman
