@@ -1,0 +1,8 @@
+---
+- name: Sets up traefik for use both other containers running on a system
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Set up traefik
+      ansible.builtin.include_role:
+        name: deploy_traefik
