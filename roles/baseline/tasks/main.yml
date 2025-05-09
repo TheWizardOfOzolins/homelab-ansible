@@ -64,6 +64,7 @@
 
 - name: Configure Podman
   when: baseline_podman
+  become: true
   block:
     - name: Install Podman
       ansible.builtin.dnf:
