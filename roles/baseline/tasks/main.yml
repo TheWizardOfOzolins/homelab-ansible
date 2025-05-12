@@ -1,6 +1,10 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # tasks file for baseline
+- name: Set the hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
 - name: Install mandatory packages
   ansible.builtin.dnf:
     name:

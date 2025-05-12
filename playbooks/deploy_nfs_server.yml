@@ -1,0 +1,7 @@
+---
+- name: Sets up nfs server
+  hosts: nfs
+  become: true
+  gather_facts: false
+  tasks:
+    - 

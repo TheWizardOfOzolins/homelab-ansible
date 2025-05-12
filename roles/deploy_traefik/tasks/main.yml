@@ -17,15 +17,20 @@
 
 - name: Template out the traefik toml
   ansible.builtin.template:
-    src: templates/traefik.toml.j2
-    dest: /opt/traefik/traefik.toml
+    src: "templates/{{ item.template }}"
+    dest: "{{ item.path }}"
     owner: root
     group: root
     mode: '0644'
+  loop:
+    - path: /opt/traefik/dynamic.yml
+      template: dynamic.yml.j2
+    - path: /opt/traefik/traefik.yml
+      template: traefik.yml.j2
 
 - name: Set up traefik container
   vars:
-    podman_create_host_directories: "{{ deploy_traefik_podman_create_host_directories }}"
+    podman_firewall: "{{ deploy_traefik_podman_firewall }}"
     podman_kube_specs: "{{ deploy_traefik_podman_kube_specs }}"
   ansible.builtin.include_role:
     name: fedora.linux_system_roles.podman

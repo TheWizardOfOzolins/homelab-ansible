@@ -1,5 +1,6 @@
 ---
 - name: Sets up traefik for use both other containers running on a system
+  hosts: dns
   become: true
   gather_facts: false
   tasks:

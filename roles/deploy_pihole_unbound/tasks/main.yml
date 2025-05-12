@@ -71,11 +71,11 @@
         name: dns
         state: started
 
-- name: Enable DNS syncing
-  when: deploy_pihole_unbound_dns_sync_podman_kube_specs is defined
-  block:
-    - name: Set up dns sync container
-      vars:
-        podman_kube_specs: "{{ deploy_pihole_unbound_dns_sync_podman_kube_specs }}"
-      ansible.builtin.include_role:
-        name: fedora.linux_system_roles.podman
+# - name: Enable DNS syncing
+#   when: deploy_pihole_unbound_dns_sync_podman_kube_specs is defined
+#   block:
+#     - name: Set up dns sync container
+#       vars:
+#         podman_kube_specs: "{{ deploy_pihole_unbound_dns_sync_podman_kube_specs }}"
+#       ansible.builtin.include_role:
+#         name: fedora.linux_system_roles.podman
