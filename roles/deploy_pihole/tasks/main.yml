@@ -37,7 +37,7 @@
     name: fedora.linux_system_roles.podman
 
 - name: Enable wildcard DNS support
-  when: deploy_pihole_unbound_wildcard_dns_address is defined
+  when: deploy_pihole_wildcard_dns_address is defined
   block:
     - name: Set etc_dnsmasq_d to true in pihole.toml
       ansible.builtin.replace:
@@ -59,10 +59,10 @@
         state: started
 
 - name: Enable DNS syncing
-  when: deploy_pihole_unbound_dns_sync_podman_kube_specs is defined
+  when: deploy_pihole_ns_sync_podman_kube_specs is defined
   block:
     - name: Set up dns sync container
       vars:
-        podman_kube_specs: "{{ deploy_pihole_unbound_dns_sync_podman_kube_specs }}"
+        podman_kube_specs: "{{ deploy_pihole_dns_sync_podman_kube_specs }}"
       ansible.builtin.include_role:
         name: fedora.linux_system_roles.podman
