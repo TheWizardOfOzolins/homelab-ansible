@@ -4,6 +4,8 @@
 - name: Set the hostname
   ansible.builtin.hostname:
     name: "{{ inventory_hostname }}"
+    use: systemd
+  become: true
 
 - name: Install mandatory packages
   ansible.builtin.dnf:
@@ -50,8 +52,8 @@
 
 - name: Configure motd
   ansible.builtin.template:
-    src: motd.j2
-    dest: /etc/motd
+    src: motd.sh.j2
+    dest: /etc/profile.d/motd.sh
     owner: root
     group: root
     mode: '0644'
@@ -81,3 +83,27 @@
         name: podman.socket
         state: started
         enabled: true
+
+- name: Configure cockpit
+  when: baseline_cockpit
+  become: true
+  block:
+    - name: Install Cockpit
+      vars:
+        cockpit_packages:
+          - cockpit
+          - cockpit-podman
+          - cockpit-networkmanager
+          - cockpit-storaged
+          - cockpit-file-sharing
+          - cockpit-bridge
+        cockpit_manage_firewall: false
+        cockpit_port: 9090
+        cockpit_config:
+          WebService:
+            Origins: "https://cockpit.{{ inventory_hostname }}"
+          Session:
+            IdleTimeout: 15
+            Banner: "/etc/issue"
+      ansible.builtin.include_role:
+        name: fedora.linux_system_roles.cockpit

@@ -4,4 +4,6 @@
   become: true
   gather_facts: false
   tasks:
-    - 
+    - name: Include deploy_nfs role
+      ansible.builtin.include_role:
+        name: deploy_nfs

@@ -1,0 +1,77 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for deploy_nfs
+- name: Install deps for nfs server
+  ansible.builtin.dnf:
+    name:
+      - nfs-utils
+      - nfs4-acl-tools
+      - cockpit-file-sharing
+    state: present
+
+- name: Disable all nfs version 3
+  when: deploy_nfs_disable_nfs_v3 | default(true)
+  block:
+    - name: Disable nfs version 3
+      ansible.builtin.lineinfile:
+        path: /etc/nfs.conf
+        regexp: '^#?vers3=.*'
+        line: 'vers3=n'
+
+    - name: Disable nfs version 3 services
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        enabled: false
+        state: stopped
+      loop:
+        - rpc-statd.service
+        - rpcbind.service
+        - rpcbind.socket
+
+    - name: Create nfs nfs-mountd.service.d directory
+      ansible.builtin.file:
+        path: /etc/systemd/system/nfs-mountd.service.d/
+        state: directory
+        mode: '0755'
+        owner: root
+        group: root
+
+    - name: Stop rpc.mountd from listening for nfs version 3 requests
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/nfs-mountd.service.d/v4only.conf"
+        content: |
+          [Service]
+          ExecStart=
+          ExecStart=/usr/sbin/rpc.mountd --no-tcp --no-udp
+        owner: root
+        group: root
+        mode: '0644'
+      notify:
+        - Restart nfs server
+
+- name: Create nfs export directory
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: root
+    group: root
+  loop: "{{ nfs_export_dirs }}"
+
+- name: Start nfs server
+  ansible.builtin.systemd:
+    name: nfs-server
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Configure nfs exports file
+  ansible.builtin.template:
+    src: templates/exports.j2
+    dest: /etc/exports
+    owner: root
+    group: root
+    mode: '0644'
+  when: deploy_nfs_exports is defined
+  notify:
+    - Restart nfs server

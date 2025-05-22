@@ -1,0 +1,8 @@
+{#
+  Jinja2 template for /etc/exports
+  This file is managed by Ansible. DO NOT EDIT MANUALLY.
+#}
+
+{% for export in deploy_nfs_exports %}
+{{ export.path }} {{ export.clients | join(' ') }}
+{% endfor %}

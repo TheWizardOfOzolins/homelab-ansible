@@ -1,19 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # tasks file for deploy_pihole_unbound
-- name: Precreate unbound config dir
-  ansible.builtin.file:
-    path: /opt/unbound/
-    state: directory
-    mode: '0750'
-
-- name: Template out unbound config
-  ansible.builtin.template:
-    src: templates/unbound.conf.j2
-    dest: /opt/unbound/unbound.conf
-    mode: '0644'
-    owner: root
-    group: root
 
 - name: Set DNSStubListener to no
   ansible.builtin.lineinfile:
@@ -71,11 +58,11 @@
         name: dns
         state: started
 
-# - name: Enable DNS syncing
-#   when: deploy_pihole_unbound_dns_sync_podman_kube_specs is defined
-#   block:
-#     - name: Set up dns sync container
-#       vars:
-#         podman_kube_specs: "{{ deploy_pihole_unbound_dns_sync_podman_kube_specs }}"
-#       ansible.builtin.include_role:
-#         name: fedora.linux_system_roles.podman
+- name: Enable DNS syncing
+  when: deploy_pihole_unbound_dns_sync_podman_kube_specs is defined
+  block:
+    - name: Set up dns sync container
+      vars:
+        podman_kube_specs: "{{ deploy_pihole_unbound_dns_sync_podman_kube_specs }}"
+      ansible.builtin.include_role:
+        name: fedora.linux_system_roles.podman
