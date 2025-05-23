@@ -7,16 +7,16 @@
     use: systemd
   become: true
 
-- name: Install mandatory packages
+- name: Remove unused packages
   ansible.builtin.dnf:
-    name:
-      - git
-  when: baseline_packages is defined
-  become: true
+    name: "{{ baseline_remove_packages }}"
+    state: absent
+  when: baseline_remove_packages is defined
 
 - name: Install baseline packages
   ansible.builtin.dnf:
     name: "{{ baseline_packages }}"
+    state: present
   when: baseline_packages is defined
   become: true
 
