@@ -2,7 +2,7 @@
 
 This dir stores all the playbooks for this repo. Ideally you want to run your playbooks from the top leave and not from within this playbooks dir. The examples below will be as if you are running it from the top level dir/ 
 
-## How to run playbooks.
+## How to run playbooks
 
 - Running the baseline playbook. This as the name suggests baselines your fedora/centos/rhel server with some standard baselines
 
