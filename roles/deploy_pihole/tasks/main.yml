@@ -30,9 +30,9 @@
 
 - name: Set up containers
   vars:
-    podman_create_host_directories: "{{ dns_podman_create_host_directories }}"
-    podman_firewall: "{{ dns_podman_firewall }}"
-    podman_kube_specs: "{{ dns_podman_kube_specs }}"
+    podman_create_host_directories: "{{ deploy_pihole_dns_podman_create_host_directories }}"
+    podman_firewall: "{{ deploy_pihole_dns_podman_firewall }}"
+    podman_kube_specs: "{{ deploy_pihole_dns_podman_kube_specs }}"
   ansible.builtin.include_role:
     name: fedora.linux_system_roles.podman
 
