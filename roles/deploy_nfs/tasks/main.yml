@@ -2,6 +2,10 @@
 ---
 # tasks file for deploy_nfs
 - name: Install deps for nfs server
+  when:
+    - ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_release'] != 'CoreOS'
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution'] == 'CentOS
   ansible.builtin.dnf:
     name:
       - nfs-utils

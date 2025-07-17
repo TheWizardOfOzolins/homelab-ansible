@@ -27,5 +27,5 @@ To provide an automated way to configure the non OCP component of my homelab usi
 - Run deploy tailscale
 
     ```bash
-    ansible-playbook -u admin -i ~/git/homelab-env/inventory playbooks/deploy_tailscale.yml --ask-vault-pass -kK
+    ansible-playbook -u admin -i ~/git/homelab-env/inventory playbooks/deploy_tailscale.yml -kK
     ```

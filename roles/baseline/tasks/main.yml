@@ -69,7 +69,11 @@
   become: true
 
 - name: Configure Podman
-  when: baseline_podman
+  when: 
+    - baseline_podman
+    - ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_release'] != 'CoreOS'
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution'] == 'CentOS'
   become: true
   block:
     - name: Install Podman
@@ -85,7 +89,11 @@
         enabled: true
 
 - name: Configure cockpit
-  when: baseline_cockpit
+  when: 
+    - baseline_cockpit is defined
+    - ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_release'] != 'CoreOS'
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution'] == 'CentOS'
   become: true
   block:
     - name: Install Cockpit
@@ -95,7 +103,6 @@
           - cockpit-podman
           - cockpit-networkmanager
           - cockpit-storaged
-          - cockpit-file-sharing
           - cockpit-bridge
         cockpit_manage_firewall: false
         cockpit_port: 9090
