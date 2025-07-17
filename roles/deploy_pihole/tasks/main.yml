@@ -1,19 +1,6 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # tasks file for deploy_pihole_unbound
-- name: Precreate unbound config dir
-  ansible.builtin.file:
-    path: /opt/unbound/
-    state: directory
-    mode: '0750'
-
-- name: Template out unbound config
-  ansible.builtin.template:
-    src: templates/unbound.conf.j2
-    dest: /opt/unbound/unbound.conf
-    mode: '0644'
-    owner: root
-    group: root
 
 - name: Set DNSStubListener to no
   ansible.builtin.lineinfile:
@@ -43,22 +30,39 @@
 
 - name: Set up containers
   vars:
-    podman_create_host_directories: "{{ dns_podman_create_host_directories }}"
-    podman_firewall: "{{ dns_podman_firewall }}"
-    podman_kube_specs: "{{ dns_podman_kube_specs }}"
+    podman_create_host_directories: "{{ deploy_pihole_dns_podman_create_host_directories }}"
+    podman_firewall: "{{ deploy_pihole_dns_podman_firewall }}"
+    podman_kube_specs: "{{ deploy_pihole_dns_podman_kube_specs }}"
   ansible.builtin.include_role:
     name: fedora.linux_system_roles.podman
 
 - name: Enable wildcard DNS support
-  when: deploy_pihole_unbound_wildcard_dns_address is defined
+  when: deploy_pihole_wildcard_dns_address is defined
   block:
     - name: Set etc_dnsmasq_d to true in pihole.toml
       ansible.builtin.replace:
         path: /opt/pihole/config/pihole.toml
         regexp: '^etc_dnsmasq_d\s*=.*$'
         replace: 'etc_dnsmasq_d = true'
-    
+
     - name: Template out custom DNS wildcard hosts
       ansible.builtin.template:
         src: templates/dnsmasq.d/99-custom.conf
+        dest: /opt/pihole/dnsmasq.d/99-custom.conf
+        owner: root
+        group: root
+        mode: '0644'
 
+    - name: Restart dns pod
+      containers.podman.podman_pod:
+        name: dns
+        state: started
+
+- name: Enable DNS syncing
+  when: deploy_pihole_ns_sync_podman_kube_specs is defined
+  block:
+    - name: Set up dns sync container
+      vars:
+        podman_kube_specs: "{{ deploy_pihole_dns_sync_podman_kube_specs }}"
+      ansible.builtin.include_role:
+        name: fedora.linux_system_roles.podman

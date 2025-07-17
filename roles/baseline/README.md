@@ -16,22 +16,50 @@ Role Variables
 --------------
 
 ```yaml
-baseline_timezone: Australia/Sydney
+
+# Setting timezone
+baseline_timezone: UTC
+
+# Installing some default packages
 baseline_packages:
   - vim
   - tmux
+  - git
   - tcpdump
+
+# Remove some packages
+baseline_remove_packages:
+  - insights-client
+
+# Example vars for cockpit configure
+
+cockpit_packages:
+  - cockpit
+  - cockpit-podman
+  - cockpit-networkmanager
+  - cockpit-storaged
+  - cockpit-file-sharing
+  - cockpit-bridge
+cockpit_manage_firewall: false
+cockpit_port: 9090
+cockpit_config:
+  WebService:
+    Origins: "https://cockpit.{{ inventory_hostname }}"
+  Session:
+    IdleTimeout: 15
+    Banner: "/etc/issue"
 ```
 
 Example Playbook
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 ```yaml
-    - name: Baseline
-      hosts: servers
-      tasks:
-         - name: Run baseline role
+- name: Run baseline role
+  hosts: all
+  tasks:
+    - name: Include baseline role
+      ansible.builtin.include_role:
+        name: baseline
 ```
 
 License
@@ -42,4 +70,4 @@ MIT
 Author Information
 ------------------
 
-The Wizard of OZ
+The Wizard of Ozolins

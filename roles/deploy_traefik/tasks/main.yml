@@ -1,0 +1,36 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for roles/deploy_traefik
+- name: Precreate traefik config dir
+  ansible.builtin.file:
+    path: /opt/traefik/
+    state: directory
+    mode: '0750'
+
+- name: Touch again the same file, but do not change times this makes the task idempotent
+  ansible.builtin.file:
+    path: /opt/traefik/acme.json
+    state: touch
+    mode: u+rw,g-wx,o-rwx
+    modification_time: preserve
+    access_time: preserve
+
+- name: Template out the traefik toml
+  ansible.builtin.template:
+    src: "templates/{{ item.template }}"
+    dest: "{{ item.path }}"
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - path: /opt/traefik/dynamic.yml
+      template: dynamic.yml.j2
+    - path: /opt/traefik/traefik.yml
+      template: traefik.yml.j2
+
+- name: Set up traefik container
+  vars:
+    podman_firewall: "{{ deploy_traefik_podman_firewall }}"
+    podman_kube_specs: "{{ deploy_traefik_podman_kube_specs }}"
+  ansible.builtin.include_role:
+    name: fedora.linux_system_roles.podman

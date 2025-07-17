@@ -1,0 +1,26 @@
+api:
+  dashboard: true # Optional can be disabled
+  insecure: true # Optional can be disabled
+log:
+  level: INFO # Optional can be Enabled if needed for troubleshooting
+entryPoints:
+  web:
+    address: ":80"
+  websecure:
+    address: ":443"
+serversTransport:
+  insecureSkipVerify: true
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+#certificatesResolvers:
+#  cloudflare:
+#    acme:
+#      email: postmaster@aozolins.com
+#      storage: /acme.json
+#      caServer: https://acme-v02.api.letsencrypt.org/directory # production (default)
+#      dnsChallenge:
+#        provider: cloudflare
+#        resolvers: "1.1.1.1:53,1.0.0.1:53"
+#        delayBeforeCheck: 90

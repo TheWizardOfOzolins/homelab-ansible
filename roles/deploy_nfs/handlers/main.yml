@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MIT-0
+---
+# handlers file for deploy_nfs
+- name: Restart nfs server
+  ansible.builtin.systemd:
+    name: nfs-server
+    state: restarted
+    enabled: true
+    daemon_reload: true

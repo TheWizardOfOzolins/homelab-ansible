@@ -1,0 +1,18 @@
+#!/bin/bash
+PRIMARY_IP=$(ip -4 addr show scope global | grep -oP 'inet \K[\d.]+' | head -n1)
+
+if [[ -n "$SUDO_USER" ]]; then
+    # This script is being run through sudo, so exit to prevent showing the MOTD.
+    return 0
+fi
+
+echo "Welcome to the [ H O M E L A B ] 👨💻"
+
+echo "Hostname: $(hostname)"
+echo "IP Address: $PRIMARY_IP"
+echo "Kernel: $(uname -r)"
+echo "Uptime: $(uptime -p)"
+
+echo "Have fun, sysadmin!"
+
+

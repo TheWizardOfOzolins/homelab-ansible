@@ -1,8 +1,8 @@
-- name: Sets up unbound and pihole in a container
+- name: Sets pihole in a container
   hosts: dns
   become: true
-  gather_facts: false
+  gather_facts: true
   tasks:
     - name: Set up containers
       ansible.builtin.include_role:
-        name: deploy_pihole_unbound
+        name: deploy_pihole

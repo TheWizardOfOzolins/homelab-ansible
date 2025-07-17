@@ -1,0 +1,248 @@
+---
+version: "3"
+services:
+  gluetun:
+    image: docker.io/qmcgaw/gluetun:latest
+    container_name: gluetun
+    security_opt:
+      - "label=disable"
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW 
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=nordvpn
+      - VPN_TYPE=openvpn # or wireguard
+      - OPENVPN_USER=MmbqfW8vCpZW1ao7xrrmjBGy
+      - OPENVPN_PASSWORD=t9raG5f7tzjFLzBQ3JJKyzDA
+      - SERVER_COUNTRIES=Australia
+    labels:
+      - "traefik.enable=true"
+    # QBitTorrent
+      - "traefik.http.routers.qbit.rule=Host(`qbit.home`)"
+      - "traefik.http.routers.qbit.service=qbit"
+      - "traefik.http.services.qbit.loadbalancer.server.port=10095"
+      - "traefik.http.middlewares.qbit.ipwhitelist.sourcerange=192.168.1.0/24"
+    # Radarr
+      - "traefik.http.routers.radarr.rule=Host(`radarr.home`)"
+      - "traefik.http.routers.radarr.service=radarr"             
+      - "traefik.http.services.radarr.loadbalancer.server.port=7878"
+      - "traefik.http.middlewares.radarr.ipwhitelist.sourcerange=192.168.1.0/24"
+    # Prowlarr
+      - "traefik.http.routers.prowlarr.rule=Host(`prowlarr.home`)"
+      - "traefik.http.routers.prowlarr.service=prowlarr"             
+      - "traefik.http.services.prowlarr.loadbalancer.server.port=9696"
+      - "traefik.http.middlewares.prowlarr.ipwhitelist.sourcerange=192.168.1.0/24"
+    # Sonarr
+      - "traefik.http.routers.sonarr.rule=Host(`sonarr.home`)"
+      - "traefik.http.routers.sonarr.service=sonarr"             
+      - "traefik.http.services.sonarr.loadbalancer.server.port=8989"
+      - "traefik.http.middlewares.sonarr.ipwhitelist.sourcerange=192.168.1.0/24"
+    # Readarr Audiobooks
+      - "traefik.http.routers.audiobooks-readarr.rule=Host(`audiobooks.readarr.home`)"
+      - "traefik.http.routers.audiobooks-readarr.service=audiobooks-readarr"
+      - "traefik.http.services.audiobooks-readarr.loadbalancer.server.port=8787"       
+      - "traefik.http.middlewares.audiobooks-readarr.ipwhitelist.sourcerange=192.168.1.0/24"
+  traefik:
+    image: docker.io/library/traefik:latest
+    container_name: traefik
+    security_opt:
+      - "label=disable"
+    environment:
+      - CF_DNS_API_TOKEN=DcPcVIyrUqz1waKrW_mxkNE4hPMunoioOCCQX1-0
+    volumes:
+      - "/mnt/data/applications/traefik/acme.json:/acme.json"
+      - "/mnt/data/applications/traefik/traefik.yaml:/etc/traefik/traefik.yml"
+      - "/var/run/podman/podman.sock:/var/run/docker.sock"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    dns:
+      - 1.1.1.1
+      - 192.168.1.7
+  qbit:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbit
+    depends_on: traefik
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+      - TORRENTING_PORT=6881
+      - WEBUI_PORT=10095
+    network_mode: "service:gluetun"
+    volumes:
+      - /mnt/data/applications/qbittorrent/appdata:/config:Z
+      - /mnt/data/media/torrents:/downloads:z #optional
+        #    ports:
+        #      - 8080:8080
+        #      - 6881:6881
+        #      - 6881:6881
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    depends_on: qbit
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    volumes:
+      - /mnt/data/applications/radarr/data:/config:Z
+      - /mnt/data/media/medialibrary/movies:/movies:z #optional
+      - /mnt/data/media/torrents:/downloads:z #optional
+        #    ports:
+        #      - 7878:7878
+    network_mode: "service:gluetun"  
+  plex:
+    image: lscr.io/linuxserver/plex:latest
+    container_name: plex
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+      - VERSION=podman
+      - PLEX_CLAIM=claim-Y5BfujEmjysJxmzrZtsx #optional
+    volumes:
+      - /mnt/data/applications/plex/library:/config:Z
+      - /mnt/data/media/medialibrary/tvseries:/tvshows:z
+      - /mnt/data/media/medialibrary/movies:/movies:z
+      - /mnt/data/media/medialibrary/audiobooks:/audiobooks:z
+    network_mode: host
+    labels:
+      - "traefik.http.routers.plex.rule=Host(`plex.aozolins.com`)"
+      - "traefik.http.routers.plex.service=plex"
+      - "traefik.enable=true"
+      - "traefik.http.routers.plex.entrypoints=websecure"
+      - "traefik.http.services.plex.loadbalancer.server.port=32400"
+      - "traefik.http.routers.plex.tls.certresolver=cloudflare"
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    volumes:
+      - /mnt/data/applications/overseerr/config:/config:Z
+      #    ports:
+      #      - 5055:5055
+    extra_hosts:
+      - sonarr.home:192.168.1.3
+      - radarr.home:192.168.1.3
+    dns:
+      - 1.1.1.1
+      - 192.168.1.7
+    labels:
+      - "traefik.http.routers.overseerr.rule=Host(`requests.aozolins.com`)"
+      - "traefik.http.routers.overseerr.service=overseerr"
+      - "traefik.http.services.overseerr.loadbalancer.server.port=5055"
+      - "traefik.enable=true"
+      - "traefik.http.routers.overseerr.entrypoints=websecure"
+      - "traefik.http.routers.overseerr.tls.certresolver=cloudflare"
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    volumes:
+      - /mnt/data/applications/prowlarr/data:/config:Z
+        #   ports:
+        #      - 9696:9696
+    network_mode: "service:gluetun"
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    depends_on: qbit
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    volumes:
+      - /mnt/data/applications/sonarr/data:/config:Z
+      - /mnt/data/media/medialibrary/tvseries:/tvshows:z #optional
+      - /mnt/data/media/torrents:/downloads:z #optional
+        #ports:
+        #      - 8989:8989
+    network_mode: "service:gluetun"
+  audiobooks-readarr:
+    image: lscr.io/linuxserver/readarr:develop
+    container_name: readarr-audiobooks
+    depends_on: qbit
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    volumes:
+      - /mnt/data/applications/readarr-audiobooks/data:/config:Z
+      - /mnt/data/media/medialibrary/audiobooks:/books:z #optional
+      - /mnt/data/media/torrents:/downloads:z #optional
+        #ports:
+        #      - 8787:8787
+    network_mode: "service:gluetun"  
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    environment:
+      - PUID=568
+      - PGID=568
+      - TZ=Etc/UTC
+    extra_hosts:
+      - sonarr.home:192.168.1.3
+      - radarr.home:192.168.1.3
+    dns:
+      - 9.9.9.9
+      - 192.168.1.7
+    volumes:
+      - /mnt/data/applications/bazarr/data:/config:Z
+      - /mnt/data/media/medialibrary/movies:/movies:z #optional
+      - /mnt/data/media/medialibrary/tvseries:/tvshows:z #optional
+        #  ports:
+        #      - 6767:6767
+    labels:
+      - "traefik.http.routers.bazarr.rule=Host(`bazarr.home`)"
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.bazarr.ipwhitelist.sourcerange=192.168.1.0/24"
+  cloudflare-ddns:
+    container_name: ddns
+    image: docker.io/favonia/cloudflare-ddns:latest
+    # This bypasses network isolation and makes IPv6 easier (optional; see below)
+    restart: always
+    # Restart the updater after reboot
+    user: "1000:1000"
+    # Run the updater with a specific user ID and group ID (in that order).
+    # You should change the two numbers based on your setup.
+    # This is optional but highly recommended; otherwise, you will probably
+    # run the updater as a superuser (root), which is usually a bad idea.
+    read_only: true
+    # Make the container filesystem read-only (optional but recommended)
+    cap_drop: [all]
+    # Drop all Linux capabilities (optional but recommended)
+    security_opt: [no-new-privileges:true]
+    # Another protection to restrict superuser privileges (optional but recommended)
+    environment:
+      - CF_API_TOKEN=pgwfNiutz745Z8yNRqNVpVFHgLImGnQkfz5TlkU7
+        # Your Cloudflare API token
+      - IP4_DOMAINS=aozolins.com
+        # Your domains (separated by commas)
+        #- PROXIED=true
+        # Tell Cloudflare to cache webpages and hide your IP (optional)
+  unmanic:
+    container_name: unmanic
+    image: docker.io/josh5/unmanic:latest
+    #ports:
+    #  - 8888:8888
+    environment:
+      - PUID=568
+      - PGID=568
+    volumes:
+      - /mnt/data/applications/unmanic/data:/config:Z
+      - /mnt/data/media/medialibrary/:/library:z
+      - /mnt/data/applications/unmanic/tmp:/tmp/unmanic:z
+    labels:
+      - "traefik.http.routers.unmanic.rule=Host(`unmanic.home`)"
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.unmanic.ipwhitelist.sourcerange=192.168.1.0/24"

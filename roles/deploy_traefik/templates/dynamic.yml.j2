@@ -1,0 +1,17 @@
+{% for config in deploy_traefik_dynamic_file_config %}
+http:
+  routers:
+    {{ config.service }}:
+      rule: "{{ config.rule }}"
+      entryPoints:
+        - websecure
+      service: {{ config.service }}
+{% endfor %}
+{% for config in deploy_traefik_dynamic_file_config %}
+  services:
+    {{ config.service }}:
+      loadBalancer:
+        servers:
+          - url: "{{ config.url }}"
+{% endfor %}
+

@@ -1,16 +1,22 @@
 # SPDX-License-Identifier: MIT-0
 ---
 # tasks file for baseline
-- name: Install mandatory packages
-  ansible.builtin.dnf:
-    name:
-      - git
-  when: baseline_packages is defined
+- name: Set the hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+    use: systemd
   become: true
+
+- name: Remove unused packages
+  ansible.builtin.dnf:
+    name: "{{ baseline_remove_packages }}"
+    state: absent
+  when: baseline_remove_packages is defined
 
 - name: Install baseline packages
   ansible.builtin.dnf:
     name: "{{ baseline_packages }}"
+    state: present
   when: baseline_packages is defined
   become: true
 
@@ -46,8 +52,8 @@
 
 - name: Configure motd
   ansible.builtin.template:
-    src: motd.j2
-    dest: /etc/motd
+    src: motd.sh.j2
+    dest: /etc/profile.d/motd.sh
     owner: root
     group: root
     mode: '0644'
@@ -61,3 +67,50 @@
     group: root
     mode: '0644'
   become: true
+
+- name: Configure Podman
+  when: 
+    - baseline_podman
+    - ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_release'] != 'CoreOS'
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution'] == 'CentOS'
+  become: true
+  block:
+    - name: Install Podman
+      ansible.builtin.dnf:
+        name:
+          - podman
+        state: present
+
+    - name: Configure Podman socket
+      ansible.builtin.systemd:
+        name: podman.socket
+        state: started
+        enabled: true
+
+- name: Configure cockpit
+  when: 
+    - baseline_cockpit is defined
+    - ansible_facts['distribution'] == 'Fedora' and ansible_facts['distribution_release'] != 'CoreOS'
+    - ansible_facts['distribution'] == 'RedHat'
+    - ansible_facts['distribution'] == 'CentOS'
+  become: true
+  block:
+    - name: Install Cockpit
+      vars:
+        cockpit_packages:
+          - cockpit
+          - cockpit-podman
+          - cockpit-networkmanager
+          - cockpit-storaged
+          - cockpit-bridge
+        cockpit_manage_firewall: false
+        cockpit_port: 9090
+        cockpit_config:
+          WebService:
+            Origins: "https://cockpit.{{ inventory_hostname }}"
+          Session:
+            IdleTimeout: 15
+            Banner: "/etc/issue"
+      ansible.builtin.include_role:
+        name: fedora.linux_system_roles.cockpit

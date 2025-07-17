@@ -1,61 +1,31 @@
-# Configuring My Homelab
+# Homelabe Ansible
 
-## Install RHEL
+## Purpose
 
-Get the latest version off the redhat website
+To provide an automated way to configure the non OCP component of my homelab using ansible
 
-## Install / configure deps
+## General info
 
-### Install Cockpit
+- Playbooks are located under playbooks/
+- Roles are located under roles/
+- All playbooks should be run from the top level dir
 
-```bash
-sudo -i
-dnf install cockpit cockpit-pcp -y
-systemctl enable --now cockpit.socket
-firewall-cmd --add-service=cockpit
-firewall-cmd --add-service=cockpit --permanent
-```
+## Usage
 
-### Install/Configure ZFS
+- Run Baseline
 
-```bash
-dnf install https://zfsonlinux.org/epel/zfs-release-2-3$(rpm --eval "%{dist}").noarch.rpm
+    ```bash
+    ansible-playbook -u admin -i ~/git/homelab-env/inventory playbooks/baseline.yml -kK
+    ```
 
-dnf config-manager --disable zfs
-dnf config-manager --enable zfs-kmod
-dnf install zfs -y
+- Run deploy dns
 
-echo zfs >/etc/modules-load.d/zfs.conf
+    ```bash
+    ansible-playbook -u admin -i ~/git/homelab-env/inventory playbooks/deploy_dns.yml --ask-vault-pass -kK
+    ```
 
-dnf install git -y
-git clone https://github.com/45drives/cockpit-zfs-manager.git
-cp -r cockpit-zfs-manager/zfs /usr/share/cockpit
-systemctl restart cockpit
+- Run deploy tailscale
 
-```
-
-### Setup Podman
-
-```bash
-dnf install podman podman-plugins cockpit-podman -y
-systemctl enable --now podman.socket
-sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
-sudo dnf upgrade -y
-sudo dnf install podman-compose -y
-```
-
-### Configure Pools for ZFS
-
-```bash
-ls -l /dev/disk/by-id
-zpool create data
-mkdir -p /mnt/data
-zfs set mountpoint=/mnt/data data
-chmod -R 770 /mnt/data
-```
-
-### Install packages
-
-```bash
-dnf install tree tmux vim -y
-```
+    ```bash
+    ansible-playbook -u admin -i ~/git/homelab-env/inventory playbooks/deploy_tailscale.yml -kK
+    ```
