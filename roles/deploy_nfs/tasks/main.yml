@@ -14,7 +14,7 @@
     state: present
 
 - name: Disable all nfs version 3
-  when: deploy_nfs_disable_nfs_v3 | default(true)
+  when: deploy_nfs_disable_nfs_v3 | default(false)
   block:
     - name: Disable nfs version 3
       ansible.builtin.lineinfile:
